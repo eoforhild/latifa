@@ -131,7 +131,7 @@ pub fn generate_keys_and_dump() {
  * Called upon registration to the server. Will publish all stored public
  * keys.
  */
-pub async fn register_and_publish(reg_form: String) -> bool{
+pub fn register_and_publish(reg_form: String) -> bool{
     let x = xeddsa::XEdDSA::new();
     // Generate all the nonces needed for signatures
     let mut csprg = StdRng::from_entropy();
@@ -216,11 +216,10 @@ pub async fn register_and_publish(reg_form: String) -> bool{
         "pqopk_sig_arr": s_pqopk_pub_sig_arr,
     });
 
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
     let r = client.post(BASE_URL.to_owned()+"/register")
         .json(&body)
-        .send()
-        .await;
+        .send();
     let res = match r {
         Ok(res) => res,
         Err(err) => {
@@ -239,16 +238,16 @@ pub async fn register_and_publish(reg_form: String) -> bool{
 /**
  * Login function
  */
-pub async fn login(log_form: String) -> bool {
+pub fn login(log_form: String) -> bool {
     let form: Value = serde_json::from_str(&log_form).unwrap();
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
     let res = match client.post(BASE_URL.to_owned() + "/login")
-        .json(&form).send().await {
+        .json(&form).send() {
         Ok(r) => r,
         Err(_) => return false,
     };
     if res.status().as_u16() == 200 {
-        let auth = res.json::<Value>().await.unwrap();
+        let auth = res.json::<Value>().unwrap();
         let token = auth["token"].as_str().unwrap();
         let mut file = File::create("auth").unwrap();
         file.write_all(token.as_bytes()).unwrap();
@@ -264,13 +263,12 @@ pub async fn login(log_form: String) -> bool {
  * This DOES NOT mean that the request was approved,
  * only that it was posted onto the server.
  */
-pub async fn request_connection(email: String) -> bool {
+pub fn request_connection(email: String) -> bool {
     let token = fs::read_to_string("auth").unwrap();
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
     let res = match client.post(BASE_URL.to_owned()+"/requests/email/"+&email)
         .header("Authorization", "Bearer ".to_owned() + &token)
-        .send()
-        .await {
+        .send() {
         Ok(e) => e,
         Err(_) => return false,
     };
@@ -281,17 +279,16 @@ pub async fn request_connection(email: String) -> bool {
     }
 }
 
-pub async fn pending_requests() -> bool {
+pub fn pending_requests() -> bool {
     let token = fs::read_to_string("auth").unwrap();
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
     let res = match client.get(BASE_URL.to_owned()+"/requests/pending")
         .header("Authorization", "Bearer ".to_owned() + &token)
-        .send()
-        .await {
+        .send() {
         Ok(e) => e,
         Err(_) => return false,
     };
-    match res.json::<Value>().await {
+    match res.json::<Value>() {
         Ok(r) => {
             println!("{:?}",r);
         },
@@ -307,7 +304,7 @@ pub async fn pending_requests() -> bool {
  * 
  * Email identifies the recipient of this handshake
  */
-pub async fn fetch_keys_handshake(email: String) {
+pub fn fetch_keys_handshake(email: String) {
     let x = xeddsa::XEdDSA::new();
     // FETCH from the server and get a JSON response with all the keys needed
     let keys: Value = json!({}); // temporary
@@ -385,14 +382,13 @@ pub async fn fetch_keys_handshake(email: String) {
         "opk_used": s_opk_b,
     });
 
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
     let r = client.post(BASE_URL.to_owned()+"/handshake")
         .json(&body)
-        .send()
-        .await;
+        .send();
 }
 
-pub async fn complete_handshake() {
+pub fn complete_handshake() {
 
 }
 
