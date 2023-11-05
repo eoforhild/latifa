@@ -156,7 +156,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home Screen'),
+        title: const Text('Latifa'),
       ),
       body: Center(
           child: Wrap(
@@ -206,22 +206,21 @@ class _MainScreenState extends State<MainScreen> {
             currentPageIndex = index;
           });
         },
-        indicatorColor: Colors.amber[800],
         selectedIndex: currentPageIndex,
         destinations: const <Widget>[
           NavigationDestination(
-            selectedIcon: Icon(Icons.home),
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
+            selectedIcon: Icon(Icons.send),
+            icon: Icon(Icons.send_outlined),
+            label: 'Send',
           ),
           NavigationDestination(
-            icon: Icon(Icons.business),
-            label: 'Business',
+            icon: Icon(Icons.mail_lock),
+            label: 'Recieve',
           ),
           NavigationDestination(
-            selectedIcon: Icon(Icons.school),
-            icon: Icon(Icons.school_outlined),
-            label: 'School',
+            selectedIcon: Icon(Icons.history),
+            icon: Icon(Icons.history_outlined),
+            label: 'History',
           ),
         ],
       ),
@@ -336,6 +335,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
+        brightness: Brightness.dark,
         // This is the theme of your application.
         //
         // Try running your application with "flutter run". You'll see the
@@ -350,6 +350,7 @@ class MyApp extends StatelessWidget {
       ),
       //home: const MyHomePage(title: 'Flutter Demo Home Page'),
       initialRoute: '/',
+      themeMode: ThemeMode.dark,
       routes: {
         // When navigating to the "/" route, build the FirstScreen widget.
         '/': (context) => HomeScreen(),
