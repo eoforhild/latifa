@@ -1,0 +1,25 @@
+[34m  INFO[0m[0001] webserver started, starting context
+[34m  INFO[0m[0189] [97;46mPOST[0m /register [34mclient_ip[0m=::1 [34mlatency[0m=822.6057ms [34mstatus_code[0m=204 [34muser_agent[0m=
+[34m  INFO[0m[0221] [97;46mPOST[0m /register [34mclient_ip[0m=::1 [34mlatency[0m=1.1940441s [34mstatus_code[0m=204 [34muser_agent[0m=
+[34m  INFO[0m[0226] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=431.5691ms [34mstatus_code[0m=401 [34muser_agent[0m=
+[34m  INFO[0m[0230] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=416.744ms [34mstatus_code[0m=200 [34muser_agent[0m=
+[34m  INFO[0m[0242] [97;46mPOST[0m /logout  [34mclient_ip[0m=::1 [34mlatency[0m=291.1678ms [34mstatus_code[0m=204 [34muser_agent[0m=
+[34m  INFO[0m[0324] [97;46mPOST[0m /register [34mclient_ip[0m=::1 [34mlatency[0m=1.5143094s [34mstatus_code[0m=204 [34muser_agent[0m=
+[34m  INFO[0m[0342] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=453.5787ms [34mstatus_code[0m=401 [34muser_agent[0m=
+[34m  INFO[0m[0346] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=902.8924ms [34mstatus_code[0m=401 [34muser_agent[0m=
+[34m  INFO[0m[0349] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=434.9302ms [34mstatus_code[0m=200 [34muser_agent[0m=
+[34m  INFO[0m[0364] [97;46mPOST[0m /logout  [34mclient_ip[0m=::1 [34mlatency[0m=256.2241ms [34mstatus_code[0m=204 [34muser_agent[0m=
+[34m  INFO[0m[0791] [97;46mPOST[0m /register [34mclient_ip[0m=::1 [34mlatency[0m=1.7638379s [34mstatus_code[0m=204 [34muser_agent[0m=
+[34m  INFO[0m[0808] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=188.7224ms [34mstatus_code[0m=404 [34muser_agent[0m=
+[34m  INFO[0m[0809] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=273.157ms [34mstatus_code[0m=404 [34muser_agent[0m=
+[34m  INFO[0m[0825] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=193.7382ms [34mstatus_code[0m=404 [34muser_agent[0m=
+[34m  INFO[0m[0829] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=199.1767ms [34mstatus_code[0m=404 [34muser_agent[0m=
+[34m  INFO[0m[0838] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=210.9449ms [34mstatus_code[0m=404 [34muser_agent[0m=
+[34m  INFO[0m[0852] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=204.5291ms [34mstatus_code[0m=404 [34muser_agent[0m=
+[34m  INFO[0m[0866] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=223.8118ms [34mstatus_code[0m=404 [34muser_agent[0m=
+[34m  INFO[0m[1047] [97;46mPOST[0m /register [34mclient_ip[0m=::1 [34mlatency[0m=1.39983s [34mstatus_code[0m=204 [34muser_agent[0m=
+[34m  INFO[0m[1077] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=186.1639ms [34mstatus_code[0m=404 [34muser_agent[0m=
+[34m  INFO[0m[1078] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=228.409ms [34mstatus_code[0m=404 [34muser_agent[0m=
+[34m  INFO[0m[1078] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=216.3741ms [34mstatus_code[0m=404 [34muser_agent[0m=
+[34m  INFO[0m[1094] [97;46mPOST[0m /login   [34mclient_ip[0m=::1 [34mlatency[0m=436.8978ms [34mstatus_code[0m=200 [34muser_agent[0m=
+[34m  INFO[0m[1127] [97;46mPOST[0m /logout  [34mclient_ip[0m=::1 [34mlatency[0m=297.1938ms [34mstatus_code[0m=204 [34muser_agent[0m=

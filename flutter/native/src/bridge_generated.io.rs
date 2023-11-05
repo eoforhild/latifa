@@ -22,6 +22,11 @@ pub extern "C" fn wire_login(port_: i64, log_form: *mut wire_uint_8_list) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_logout(port_: i64) {
+    wire_logout_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_request_connection(port_: i64, email: *mut wire_uint_8_list) {
     wire_request_connection_impl(port_, email)
 }
@@ -32,18 +37,18 @@ pub extern "C" fn wire_pending_requests(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_fetch_keys_handshake(port_: i64, email: *mut wire_uint_8_list) {
-    wire_fetch_keys_handshake_impl(port_, email)
+pub extern "C" fn wire_approved_requests(port_: i64) {
+    wire_approved_requests_impl(port_)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_fetch_keys_handshake(port_: i64, req_id: *mut wire_uint_8_list) {
+    wire_fetch_keys_handshake_impl(port_, req_id)
 }
 
 #[no_mangle]
 pub extern "C" fn wire_complete_handshake(port_: i64) {
     wire_complete_handshake_impl(port_)
-}
-
-#[no_mangle]
-pub extern "C" fn wire_helloWorld(port_: i64) {
-    wire_helloWorld_impl(port_)
 }
 
 // Section: allocate functions

@@ -74,6 +74,16 @@ fn wire_login_impl(port_: MessagePort, log_form: impl Wire2Api<String> + UnwindS
         },
     )
 }
+fn wire_logout_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
+        WrapInfo {
+            debug_name: "logout",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| Result::<_, ()>::Ok(logout()),
+    )
+}
 fn wire_request_connection_impl(port_: MessagePort, email: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, bool, _>(
         WrapInfo {
@@ -97,7 +107,17 @@ fn wire_pending_requests_impl(port_: MessagePort) {
         move || move |task_callback| Result::<_, ()>::Ok(pending_requests()),
     )
 }
-fn wire_fetch_keys_handshake_impl(port_: MessagePort, email: impl Wire2Api<String> + UnwindSafe) {
+fn wire_approved_requests_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
+        WrapInfo {
+            debug_name: "approved_requests",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| Result::<_, ()>::Ok(approved_requests()),
+    )
+}
+fn wire_fetch_keys_handshake_impl(port_: MessagePort, req_id: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
         WrapInfo {
             debug_name: "fetch_keys_handshake",
@@ -105,8 +125,8 @@ fn wire_fetch_keys_handshake_impl(port_: MessagePort, email: impl Wire2Api<Strin
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_email = email.wire2api();
-            move |task_callback| Result::<_, ()>::Ok(fetch_keys_handshake(api_email))
+            let api_req_id = req_id.wire2api();
+            move |task_callback| Result::<_, ()>::Ok(fetch_keys_handshake(api_req_id))
         },
     )
 }
@@ -118,16 +138,6 @@ fn wire_complete_handshake_impl(port_: MessagePort) {
             mode: FfiCallMode::Normal,
         },
         move || move |task_callback| Result::<_, ()>::Ok(complete_handshake()),
-    )
-}
-fn wire_helloWorld_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, String, _>(
-        WrapInfo {
-            debug_name: "helloWorld",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || move |task_callback| Result::<_, ()>::Ok(helloWorld()),
     )
 }
 // Section: wrapper structs

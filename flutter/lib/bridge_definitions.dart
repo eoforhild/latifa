@@ -43,6 +43,13 @@ abstract class Native {
   FlutterRustBridgeTaskConstMeta get kLoginConstMeta;
 
   ///
+  /// * Login function
+  ///
+  Future<void> logout({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kLogoutConstMeta;
+
+  ///
   /// * Requests a conncetion to the client with the email
   /// * Returns true if request was made successfully.
   /// * This DOES NOT mean that the request was approved,
@@ -56,6 +63,10 @@ abstract class Native {
 
   FlutterRustBridgeTaskConstMeta get kPendingRequestsConstMeta;
 
+  Future<void> approvedRequests({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kApprovedRequestsConstMeta;
+
   ///
   /// * Upon approval of key fetching (aka the person allowed
   /// * you to initiate contact), fetch all keys needed and
@@ -63,17 +74,13 @@ abstract class Native {
   /// *
   /// * Email identifies the recipient of this handshake
   ///
-  Future<void> fetchKeysHandshake({required String email, dynamic hint});
+  Future<void> fetchKeysHandshake({required String reqId, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kFetchKeysHandshakeConstMeta;
 
   Future<void> completeHandshake({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kCompleteHandshakeConstMeta;
-
-  Future<String> helloWorld({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kHelloWorldConstMeta;
 }
 
 class U8Array32 extends NonGrowableListView<int> {

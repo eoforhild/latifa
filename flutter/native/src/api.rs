@@ -22,7 +22,7 @@ const HKDF_F: [u8; 32] = [0xFF; 32];
 const ONETIME_CURVE: usize = 32;
 const ONETIME_PQKEM: usize = 32;
 
-const BASE_URL: &str = "http://10.169.129.170:8080";
+const BASE_URL: &str = "http://localhost:8080";
 
 pub fn kdf(km: Vec<u8>) -> [u8; 32] {
     let ikm = [&HKDF_F, km.as_slice()].concat();
@@ -239,7 +239,6 @@ pub fn register_and_publish(reg_form: String) -> bool{
  * Login function
  */
 pub fn login(log_form: String) -> bool {
-    let token = fs::read_to_string("auth").unwrap();
     let form: Value = serde_json::from_str(&log_form).unwrap();
     let client = reqwest::blocking::Client::new();
     let res = match client.post(BASE_URL.to_owned() + "/login")

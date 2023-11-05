@@ -1,33 +1,36 @@
-import 'dart:async';
+import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 
 import 'package:flutter/material.dart';
 import 'ffi.dart' if (dart.library.html) 'ffi_web.dart';
 
-final _registerKey = GlobalKey<FormState>();
-final _loginKey = GlobalKey<FormState>();
-
 void main() {
-  runApp(const MyApp());
+  api.generateKeysAndDump();
+  runApp(MyApp());
 }
 
 class RegisterScreen extends StatelessWidget {
-  const RegisterScreen({super.key});
+  final passwordController = TextEditingController();
+  final usernameController = TextEditingController();
+  final emailController = TextEditingController();
+
+  RegisterScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login Screen'),
+        title: const Text('Register Screen'),
       ),
       body: Center(
           child: Form(
-        key: _registerKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               child: TextFormField(
+                controller: usernameController,
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
                   labelText: 'Enter your username',
@@ -38,6 +41,7 @@ class RegisterScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               child: TextFormField(
+                controller: passwordController,
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
                   labelText: 'Enter your Password',
@@ -48,6 +52,7 @@ class RegisterScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               child: TextFormField(
+                controller: emailController,
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
                   labelText: 'Enter your Email',
@@ -60,8 +65,15 @@ class RegisterScreen extends StatelessWidget {
               child: ElevatedButton(
                 // Within the `FirstScreen` widget
                 onPressed: () {
-                  // Navigate to the second screen using a named route.
-                  Navigator.pushNamed(context, '/');
+                  Map preJson = {
+                    "username": usernameController.text,
+                    "email": emailController.text,
+                    "password": passwordController.text,
+                  };
+                  String stringJson = json.encode(preJson);
+                  api.registerAndPublish(regForm: stringJson);
+
+                  Navigator.pushNamed(context, '/login');
                 },
                 child: const Text('Submit'),
               ),
@@ -74,55 +86,66 @@ class RegisterScreen extends StatelessWidget {
 }
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+  final passwordController = TextEditingController();
+  final usernameController = TextEditingController();
+
+  LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login Screen'),
-      ),
-      body: Center(
-          child: Form(
-        key: _loginKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-              child: TextFormField(
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
-                  labelText: 'Enter your username',
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-              child: TextFormField(
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
-                  labelText: 'Enter your Password',
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-              child: ElevatedButton(
-                // Within the `FirstScreen` widget
-                onPressed: () {
-                  // Navigate to the second screen using a named route.
-                  Navigator.pushNamed(context, '/');
-                },
-                child: const Text('Submit'),
-              ),
-            ),
-          ],
+        appBar: AppBar(
+          title: const Text('Login Screen'),
         ),
-      )),
-    );
+        body: Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                child: TextFormField(
+                  controller: usernameController,
+                  decoration: const InputDecoration(
+                    border: UnderlineInputBorder(),
+                    labelText: 'Enter your Email',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                child: TextFormField(
+                  controller: passwordController,
+                  decoration: const InputDecoration(
+                    border: UnderlineInputBorder(),
+                    labelText: 'Enter your Password',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                child: ElevatedButton(
+                  // Within the `FirstScreen` widget
+                  onPressed: () async {
+                    Map preJson = {
+                      "login": usernameController.text,
+                      "password": passwordController.text
+                    };
+                    String stringJson = json.encode(preJson);
+                    if (await api.login(logForm: stringJson)) {
+                      Navigator.pushNamed(context, '/main');
+                    }
+                  },
+                  child: const Text('Submit'),
+                ),
+              ),
+            ],
+          ),
+        ));
   }
 }
 
@@ -141,20 +164,6 @@ class HomeScreen extends StatelessWidget {
         direction: Axis.vertical,
         spacing: 20,
         children: <Widget>[
-          Center(
-            child: FutureBuilder(
-              // All Rust functions are called as Future's
-              future: api.helloWorld(), // The Rust function we are calling.
-              builder: (context, data) {
-                if (data.hasData) {
-                  return Text(data.data!); // The string to display
-                }
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              },
-            ),
-          ),
           ElevatedButton(
             // Within the `FirstScreen` widget
             onPressed: () {
@@ -173,6 +182,147 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       )),
+    );
+  }
+}
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int currentPageIndex = 0;
+  final emailController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      bottomNavigationBar: NavigationBar(
+        onDestinationSelected: (int index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+        },
+        indicatorColor: Colors.amber[800],
+        selectedIndex: currentPageIndex,
+        destinations: const <Widget>[
+          NavigationDestination(
+            selectedIcon: Icon(Icons.home),
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.business),
+            label: 'Business',
+          ),
+          NavigationDestination(
+            selectedIcon: Icon(Icons.school),
+            icon: Icon(Icons.school_outlined),
+            label: 'School',
+          ),
+        ],
+      ),
+      body: <Widget>[
+        Scaffold(
+            appBar: AppBar(
+              title: Text('LATIFA'),
+              automaticallyImplyLeading: false,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  tooltip: 'Logout',
+                  onPressed: () {
+                    api.logout();
+                    Navigator.pushNamed(context, '/');
+                  },
+                ),
+              ],
+            ),
+            body: Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 16),
+                    child: TextFormField(
+                      controller: emailController,
+                      decoration: const InputDecoration(
+                        border: UnderlineInputBorder(),
+                        labelText: 'Enter the email of your intended recipient',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                      child: Text('Select file and send!'),
+                      onPressed: () async {
+                        var picked = await FilePicker.platform.pickFiles();
+                        var email = emailController.text;
+
+                        Navigator.pushNamed(context, '/main');
+                      }),
+                ],
+              ),
+            )),
+        Scaffold(
+          appBar: AppBar(
+            title: Text('LATIFA'),
+            automaticallyImplyLeading: false,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout),
+                tooltip: 'Logout',
+                onPressed: () {
+                  api.logout();
+                  Navigator.pushNamed(context, '/');
+                },
+              ),
+            ],
+          ),
+          body: Container(
+            color: Colors.green,
+            alignment: Alignment.center,
+            child: const Text('Page 2'),
+          ),
+        ),
+        Scaffold(
+          appBar: AppBar(
+            title: Text('LATIFA'),
+            automaticallyImplyLeading: false,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout),
+                tooltip: 'Logout',
+                onPressed: () {
+                  api.logout();
+                  Navigator.pushNamed(context, '/');
+                },
+              ),
+            ],
+          ),
+          body: Container(
+            color: Colors.blue,
+            alignment: Alignment.center,
+            child: const Text('Page 3'),
+          ),
+        ),
+      ][currentPageIndex],
+    );
+  }
+}
+
+class FileUploadButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      child: Text('UPLOAD FILE'),
+      onPressed: () async {
+        var picked = await FilePicker.platform.pickFiles();
+      },
     );
   }
 }
@@ -202,138 +352,12 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         // When navigating to the "/" route, build the FirstScreen widget.
-        '/': (context) => const HomeScreen(),
+        '/': (context) => HomeScreen(),
         // When navigating to the "/second" route, build the SecondScreen widget.
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
+        '/login': (context) => LoginScreen(),
+        '/register': (context) => RegisterScreen(),
+        '/main': (context) => MainScreen(),
       },
     );
   }
 }
-
-// class MyHomePage extends StatefulWidget {
-//   const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-//   // This widget is the home page of your application. It is stateful, meaning
-//   // that it has a State object (defined below) that contains fields that affect
-//   // how it looks.
-
-//   // This class is the configuration for the state. It holds the values (in this
-//   // case the title) provided by the parent (in this case the App widget) and
-//   // used by the build method of the State. Fields in a Widget subclass are
-//   // always marked "final".
-
-//   final String title;
-
-//   @override
-//   State<MyHomePage> createState() => _MyHomePageState();
-// }
-
-// extension<L, R> on (FutureOr<L>, FutureOr<R>) {
-//   // A convenience method enabled by Dart 3, which will be useful later.
-//   Future<(L, R)> join() async {
-//     final fut =
-//         await Future.wait([Future.value(this.$1), Future.value(this.$2)]);
-//     return (fut[0] as L, fut[1] as R);
-//   }
-// }
-
-// class _MyHomePageState extends State<MyHomePage> {
-//   // These futures belong to the state and are only initialized once,
-//   // in the initState method.
-//   late Future<Platform> platform;
-//   late Future<bool> isRelease;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     platform = api.platform();
-//     isRelease = api.rustReleaseMode();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     // This method is rerun every time setState is called.
-//     //
-//     // The Flutter framework has been optimized to make rerunning build methods
-//     // fast, so that you can just rebuild anything that needs updating rather
-//     // than having to individually change instances of widgets.
-//     return Scaffold(
-//       appBar: AppBar(
-//         // Here we take the value from the MyHomePage object that was created by
-//         // the App.build method, and use it to set our appbar title.
-//         title: Text(widget.title),
-//       ),
-//       body: Center(
-//         // Center is a layout widget. It takes a single child and positions it
-//         // in the middle of the parent.
-//         child: Column(
-//           // Column is also a layout widget. It takes a list of children and
-//           // arranges them vertically. By default, it sizes itself to fit its
-//           // children horizontally, and tries to be as tall as its parent.
-//           //
-//           // Invoke "debug painting" (press "p" in the console, choose the
-//           // "Toggle Debug Paint" action from the Flutter Inspector in Android
-//           // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-//           // to see the wireframe for each widget.
-//           //
-//           // Column has various properties to control how it sizes itself and
-//           // how it positions its children. Here we use mainAxisAlignment to
-//           // center the children vertically; the main axis here is the vertical
-//           // axis because Columns are vertical (the cross axis would be
-//           // horizontal).
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: <Widget>[
-//             const Text("You're running on"),
-//             // To render the results of a Future, a FutureBuilder is used which
-//             // turns a Future into an AsyncSnapshot, which can be used to
-//             // determine if an error was encountered, data is ready or otherwise.
-//             FutureBuilder(
-//               // We await for both futures in a tuple, then uwnrap their results inside the builder.
-//               // Recent versions of Dart allow the type of the snapshot to be correctly inferred.
-//               // Since Future.wait predates Dart 3 and does not understand tuples, we use the join method
-//               // declared earlier to concurrently await two futures while preserving type safety.
-//               future: (platform, isRelease).join(),
-//               builder: (context, snap) {
-//                 final style = Theme.of(context).textTheme.headlineMedium;
-//                 if (snap.error != null) {
-//                   // An error has been encountered, so give an appropriate response and
-//                   // pass the error details to an unobstructive tooltip.
-//                   debugPrint(snap.error.toString());
-//                   return Tooltip(
-//                     message: snap.error.toString(),
-//                     child: Text('Unknown OS', style: style),
-//                   );
-//                 }
-
-//                 // Guard return here, the data is not ready yet.
-//                 final data = snap.data;
-//                 if (data == null) return const CircularProgressIndicator();
-
-//                 final (platform, release) = data;
-//                 final releaseText = release ? 'Release' : 'Debug';
-
-//                 // Another feature introduced in Dart 3 is switch expressions,
-//                 // allowing exhaustive matching over enums or sealed classes
-//                 // similar to Rust's match expressions. Note that all possible values
-//                 // of Platform are present here; should additional values be added,
-//                 // this expression would not compile.
-//                 final text = switch (platform) {
-//                   Platform.Android => 'Android',
-//                   Platform.Ios => 'iOS',
-//                   Platform.MacApple => 'MacOS with Apple Silicon',
-//                   Platform.MacIntel => 'MacOS',
-//                   Platform.Windows => 'Windows',
-//                   Platform.Unix => 'Unix',
-//                   Platform.Wasm => 'the Web',
-//                   Platform.Unknown => 'Unknown OS',
-//                 };
-//                 return Text('$text ($releaseText)', style: style);
-//               },
-//             )
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }

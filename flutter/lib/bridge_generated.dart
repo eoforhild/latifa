@@ -98,6 +98,23 @@ class NativeImpl implements Native {
         argNames: ["logForm"],
       );
 
+  Future<void> logout({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_logout(port_),
+      parseSuccessData: _wire2api_unit,
+      parseErrorData: null,
+      constMeta: kLogoutConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kLogoutConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "logout",
+        argNames: [],
+      );
+
   Future<bool> requestConnection({required String email, dynamic hint}) {
     var arg0 = _platform.api2wire_String(email);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -133,15 +150,32 @@ class NativeImpl implements Native {
         argNames: [],
       );
 
-  Future<void> fetchKeysHandshake({required String email, dynamic hint}) {
-    var arg0 = _platform.api2wire_String(email);
+  Future<void> approvedRequests({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_approved_requests(port_),
+      parseSuccessData: _wire2api_unit,
+      parseErrorData: null,
+      constMeta: kApprovedRequestsConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kApprovedRequestsConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "approved_requests",
+        argNames: [],
+      );
+
+  Future<void> fetchKeysHandshake({required String reqId, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(reqId);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
           _platform.inner.wire_fetch_keys_handshake(port_, arg0),
       parseSuccessData: _wire2api_unit,
       parseErrorData: null,
       constMeta: kFetchKeysHandshakeConstMeta,
-      argValues: [email],
+      argValues: [reqId],
       hint: hint,
     ));
   }
@@ -149,7 +183,7 @@ class NativeImpl implements Native {
   FlutterRustBridgeTaskConstMeta get kFetchKeysHandshakeConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
         debugName: "fetch_keys_handshake",
-        argNames: ["email"],
+        argNames: ["reqId"],
       );
 
   Future<void> completeHandshake({dynamic hint}) {
@@ -169,31 +203,10 @@ class NativeImpl implements Native {
         argNames: [],
       );
 
-  Future<String> helloWorld({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_helloWorld(port_),
-      parseSuccessData: _wire2api_String,
-      parseErrorData: null,
-      constMeta: kHelloWorldConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kHelloWorldConstMeta =>
-      const FlutterRustBridgeTaskConstMeta(
-        debugName: "helloWorld",
-        argNames: [],
-      );
-
   void dispose() {
     _platform.dispose();
   }
 // Section: wire2api
-
-  String _wire2api_String(dynamic raw) {
-    return raw as String;
-  }
 
   bool _wire2api_bool(dynamic raw) {
     return raw as bool;
@@ -407,6 +420,18 @@ class NativeWire implements FlutterRustBridgeWireBase {
   late final _wire_login = _wire_loginPtr
       .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
+  void wire_logout(
+    int port_,
+  ) {
+    return _wire_logout(
+      port_,
+    );
+  }
+
+  late final _wire_logoutPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_logout');
+  late final _wire_logout = _wire_logoutPtr.asFunction<void Function(int)>();
+
   void wire_request_connection(
     int port_,
     ffi.Pointer<wire_uint_8_list> email,
@@ -438,13 +463,27 @@ class NativeWire implements FlutterRustBridgeWireBase {
   late final _wire_pending_requests =
       _wire_pending_requestsPtr.asFunction<void Function(int)>();
 
+  void wire_approved_requests(
+    int port_,
+  ) {
+    return _wire_approved_requests(
+      port_,
+    );
+  }
+
+  late final _wire_approved_requestsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_approved_requests');
+  late final _wire_approved_requests =
+      _wire_approved_requestsPtr.asFunction<void Function(int)>();
+
   void wire_fetch_keys_handshake(
     int port_,
-    ffi.Pointer<wire_uint_8_list> email,
+    ffi.Pointer<wire_uint_8_list> req_id,
   ) {
     return _wire_fetch_keys_handshake(
       port_,
-      email,
+      req_id,
     );
   }
 
@@ -468,20 +507,6 @@ class NativeWire implements FlutterRustBridgeWireBase {
           'wire_complete_handshake');
   late final _wire_complete_handshake =
       _wire_complete_handshakePtr.asFunction<void Function(int)>();
-
-  void wire_helloWorld(
-    int port_,
-  ) {
-    return _wire_helloWorld(
-      port_,
-    );
-  }
-
-  late final _wire_helloWorldPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
-          'wire_helloWorld');
-  late final _wire_helloWorld =
-      _wire_helloWorldPtr.asFunction<void Function(int)>();
 
   ffi.Pointer<wire_uint_8_list> new_uint_8_list_0(
     int len,
