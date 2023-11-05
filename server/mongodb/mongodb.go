@@ -17,11 +17,16 @@ func NewClient() (*mongo.Client, error) {
 		return nil, err
 	}
 
-	defer func() {
+	err = client.Ping(context.TODO(), nil)
+	if err != nil {
+		log2.Fatal("mongodb/client: failed to ping mongodb cluster: ", err)
+	}
+
+	/*defer func() {
 		if err := client.Disconnect(context.TODO()); err != nil {
 			log2.Fatal("mongodb/client: failed to disconnect from mongodb: ", err)
 		}
-	}()
+	}()*/
 
 	return client, nil
 }

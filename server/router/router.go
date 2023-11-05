@@ -3,12 +3,14 @@ package router
 import (
 	"github.com/apex/log"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func NewClient() *gin.Engine {
+func NewClient(mongodb mongo.Client) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode) // HACK
 
 	router := gin.New()
+	router.Use(AttachMongoClient(mongodb))
 	router.Use(gin.LoggerWithFormatter(func(params gin.LogFormatterParams) string {
 		log.WithFields(log.Fields{
 			"client_ip":   params.ClientIP,
@@ -23,9 +25,10 @@ func NewClient() *gin.Engine {
 	router.POST("/logout", RequireAuthorization(), postLogout)
 	router.POST("/register", postRegister)
 
-	router.POST("/files", RequireAuthorization())
-	router.GET("/files/:file", RequireAuthorization())
-	router.DELETE("/files/:file", RequireAuthorization())
+	router.POST("/files/upload", RequireAuthorization(), postFileUpload)
+	router.GET("/files/:file/download", RequireAuthorization(), getFileDownload)
+	router.GET("/files", RequireAuthorization(), getFiles)
+	router.DELETE("/files/:file", RequireAuthorization(), deleteFile)
 
 	return router
 }

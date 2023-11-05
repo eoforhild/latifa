@@ -1,7 +1,11 @@
-package enity
+package entity
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type File struct {
-	Id uuid.UUID `json:"id"`
+	ID   primitive.ObjectID `json:"id" bson:"_id"`
+	Uuid uuid.UUID          `bson:"uuid"`
 }

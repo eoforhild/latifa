@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"latifa/config"
+	"latifa/mongodb"
 	"latifa/router"
 	log2 "log"
 	"net/http"
@@ -51,7 +52,12 @@ func init() {
 }
 
 func rootCmdRun(cmd *cobra.Command, _ []string) {
-	r := router.NewClient()
+	mongoClient, err := mongodb.NewClient()
+	if err != nil {
+		log.WithField("error", err).Fatal("an error occured while trying to connect to mongodb")
+	}
+
+	r := router.NewClient(*mongoClient)
 
 	s := &http.Server{
 		Handler: r,

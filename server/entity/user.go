@@ -1,12 +1,12 @@
-package enity
+package entity
 
-import "github.com/google/uuid"
+import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type User struct {
-	Id       uuid.UUID `json:"id"`
-	Email    string    `json:"email"`
-	Username string    `json:"username"`
-	Password string    `json:"password"`
-	Device   string    `json:"device"`
-	Ip       string    `json:"ip"`
+	ID       primitive.ObjectID `json:"id" bson:"_id"`
+	Email    string             `bson:"email"`
+	Username string             `bson:"username"`
+	Password string             `bson:"password"`
+	Device   string             `bson:"device"`
+	Ip       string             `bson:"ip"`
 }
