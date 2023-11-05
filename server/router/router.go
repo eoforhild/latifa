@@ -22,13 +22,20 @@ func NewClient(mongodb mongo.Client) *gin.Engine {
 	}))
 
 	router.POST("/login", postLogin)
-	router.POST("/logout", RequireAuthorization(), postLogout)
+	router.POST("/logout", RequireAuthorization(), UserExists(), postLogout)
 	router.POST("/register", postRegister)
 
-	router.POST("/files/upload", RequireAuthorization(), postFileUpload)
-	router.GET("/files/:file/download", RequireAuthorization(), getFileDownload)
-	router.GET("/files", RequireAuthorization(), getFiles)
-	router.DELETE("/files/:file", RequireAuthorization(), deleteFile)
+	gated := router.Group("")
+	gated.Use(RequireAuthorization(), UserExists())
+	{
+		gated.POST("/files/upload", postFileUpload)
+		gated.GET("/files/:file/download", getFileDownload)
+		gated.GET("/files", getFiles)
+		gated.DELETE("/files/:file", deleteFile)
+
+		gated.POST("/requests")
+		gated.GET("/requests/pending")
+	}
 
 	return router
 }

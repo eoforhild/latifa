@@ -1,10 +1,11 @@
 package entity
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Key struct {
 	ID       primitive.ObjectID `json:"id" bson:"_id"`
-	UserID   primitive.ObjectID `json:"user_id" bson:"user_id"`
 	Ik       string             `bson:"ik"`
 	Spk      string             `bson:"spk"`
 	SpkSig   string             `bson:"spk_sig"`
