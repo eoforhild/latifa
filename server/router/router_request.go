@@ -7,23 +7,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type EmailRequest struct {
-	Email string `json:"email" binding:"required"`
-}
-
 func postRequestEmail(c *gin.Context) {
-	var e EmailRequest
-	if err := c.BindJSON(&e); err != nil {
-		return
-	}
+	emailParam := c.Param("email")
 
 	fromUser := ExtractUser(c)
 
 	filter := bson.M{
-		"email": e.Email,
+		"email": emailParam,
 	}
 
 	var toUser entity.User
@@ -35,15 +28,17 @@ func postRequestEmail(c *gin.Context) {
 		NewError(err).Abort(c)
 	}
 
-	request := &entity.Request{
-		FromID:   fromUser.ID,
-		ToID:     toUser.ID,
-		Accepted: false,
-		Pending:  true,
+	newRequest := bson.M{
+		"handshakes":    nil,
+		"from_username": fromUser.Username,
+		"to_id":         toUser.ID,
+		"to_username":   toUser.Username,
+		"accepted":      false,
+		"pending":       true,
 	}
 
 	requestcoll := database.Collection("requests")
-	_, err = requestcoll.InsertOne(context.TODO(), request)
+	_, err = requestcoll.InsertOne(context.TODO(), newRequest)
 
 	if err != nil {
 		NewError(err).Abort(c)
@@ -57,10 +52,17 @@ func postRequestApprove(c *gin.Context) {
 
 	requestIdParam := c.Param("request")
 
-	filter := bson.M{
-		"_id":  requestIdParam,
-		"ToID": user.ID,
+	requestId, err := primitive.ObjectIDFromHex(requestIdParam)
+	if err != nil {
+		NewError(err).Abort(c)
 	}
+
+	filter := bson.M{
+		"_id":   requestId,
+		"to_id": user.ID,
+	}
+
+	print(requestIdParam)
 
 	update := bson.M{
 		"$set": bson.M{
@@ -73,10 +75,8 @@ func postRequestApprove(c *gin.Context) {
 	database := mongodb.Database("latifa_info")
 	requestcoll := database.Collection("requests")
 
-	options := options.FindOneAndUpdate().SetUpsert(false)
-
 	var updatedRequest bson.M
-	err := requestcoll.FindOneAndUpdate(context.TODO(), filter, update, options).Decode(&updatedRequest)
+	err = requestcoll.FindOneAndUpdate(context.TODO(), filter, update).Decode(&updatedRequest)
 	if err != nil {
 		NewError(err).Abort(c)
 	}
@@ -88,7 +88,111 @@ func getRequestPending(c *gin.Context) {
 	user := ExtractUser(c)
 
 	filter := bson.M{
-		"ToID": user.ID,
+		"to_id":   user.ID,
+		"pending": true,
+	}
+
+	mongodb := ExtractMongoClient(c)
+	database := mongodb.Database("latifa_info")
+	requestcoll := database.Collection("requests")
+	cursor, err := requestcoll.Find(context.Background(), filter)
+	if err != nil {
+		NewError(err).Abort(c)
+	}
+	defer cursor.Close(context.Background())
+
+	var requests []entity.Request
+	for cursor.Next(context.Background()) {
+		var request entity.Request
+		if err := cursor.Decode(&request); err != nil {
+			NewError(err).Abort(c)
+		}
+
+		// found document
+		requests = append(requests, request)
+	}
+
+	if err := cursor.Err(); err != nil {
+		NewError(err).Abort(c)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"requests": requests})
+}
+
+func getRequestSentHistory(c *gin.Context) {
+	user := ExtractUser(c)
+
+	filter := bson.M{
+		"from_id": user.ID,
+	}
+
+	mongodb := ExtractMongoClient(c)
+	database := mongodb.Database("latifa_info")
+	requestcoll := database.Collection("requests")
+	cursor, err := requestcoll.Find(context.Background(), filter)
+	if err != nil {
+		NewError(err).Abort(c)
+	}
+	defer cursor.Close(context.Background())
+
+	var requests []entity.Request
+	for cursor.Next(context.Background()) {
+		var request entity.Request
+		if err := cursor.Decode(&request); err != nil {
+			NewError(err).Abort(c)
+		}
+
+		// found document
+		requests = append(requests, request)
+	}
+
+	if err := cursor.Err(); err != nil {
+		NewError(err).Abort(c)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"requests": requests})
+}
+
+func getRequestReceivedHistory(c *gin.Context) {
+	user := ExtractUser(c)
+
+	filter := bson.M{
+		"to_id": user.ID,
+	}
+
+	mongodb := ExtractMongoClient(c)
+	database := mongodb.Database("latifa_info")
+	requestcoll := database.Collection("requests")
+	cursor, err := requestcoll.Find(context.Background(), filter)
+	if err != nil {
+		NewError(err).Abort(c)
+	}
+	defer cursor.Close(context.Background())
+
+	var requests []entity.Request
+	for cursor.Next(context.Background()) {
+		var request entity.Request
+		if err := cursor.Decode(&request); err != nil {
+			NewError(err).Abort(c)
+		}
+
+		// found document
+		requests = append(requests, request)
+	}
+
+	if err := cursor.Err(); err != nil {
+		NewError(err).Abort(c)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"requests": requests})
+}
+
+func getRequestApproved(c *gin.Context) {
+	user := ExtractUser(c)
+
+	filter := bson.M{
+		"to_id":    user.ID,
+		"approved": true,
 	}
 
 	mongodb := ExtractMongoClient(c)
