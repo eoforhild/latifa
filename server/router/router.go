@@ -33,8 +33,9 @@ func NewClient(mongodb mongo.Client) *gin.Engine {
 		gated.GET("/files", getFiles)
 		gated.DELETE("/files/:file", deleteFile)
 
-		gated.POST("/requests")
-		gated.GET("/requests/pending")
+		gated.POST("/requests/:email", postRequestEmail)
+		gated.POST("/requests/:request/approve", postRequestApprove)
+		gated.GET("/requests/pending", getRequestPending)
 	}
 
 	return router
