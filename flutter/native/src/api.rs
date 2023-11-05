@@ -258,6 +258,21 @@ pub fn login(log_form: String) -> bool {
 }
 
 /**
+ * Login function
+ */
+pub fn logout() {
+    let client = reqwest::blocking::Client::new();
+    let res = match client.post(BASE_URL.to_owned() + "/logout")
+        .send() {
+        Ok(r) => r,
+        Err(_) => return,
+    };
+    if res.status().as_u16() == 204 {
+        fs::remove_file("auth");
+    }
+}
+
+/**
  * Requests a conncetion to the client with the email
  * Returns true if request was made successfully.
  * This DOES NOT mean that the request was approved,
@@ -403,9 +418,12 @@ pub fn fetch_keys_handshake(req_id: String) {
     });
 
     let client = reqwest::blocking::Client::new();
-    let r = client.post(BASE_URL.to_owned()+"/handshake")
+    let res = match client.post(BASE_URL.to_owned()+"/handshake")
         .json(&body)
-        .send();
+        .send() {
+            Ok(re) => re,
+            Err(_) => return,
+        };
 }
 
 pub fn complete_handshake() {
