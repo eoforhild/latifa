@@ -1,0 +1,13 @@
+debug: true
+root_directory: ""
+log_directory: "."
+# Set the value of the URI variable with your MongoDB Atlas connection string
+mongodb_uri: "mongodb://localhost:27017"
+google_cloud:
+  storage:
+    credentials_file: "./google-cloud-creds.json"
+api:
+  host: 0.0.0.0
+  port: 8080
+  ssl:
+    enabled: false
