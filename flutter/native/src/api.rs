@@ -316,7 +316,18 @@ pub fn pending_requests() -> bool {
 }
 
 pub fn approved_requests() {
+    let token = fs::read_to_string("auth").unwrap();
+    let client = reqwest::blocking::Client::new();
+    let res = match client.get(BASE_URL.to_owned()+"/requests/approved").send() {
+        Ok(r) => r,
+        Err(err) => return,
+    };
 
+    let binding = res.json::<Value>().unwrap();
+    let arr = binding.as_array().unwrap();
+    for req in arr {
+        fetch_keys_handshake(req["id"].to_string());
+    }
 }
 
 /**
@@ -384,6 +395,8 @@ pub fn fetch_keys_handshake(req_id: String) {
 
     let km = [dh1, dh2, dh3, ss].concat();
     let sk = kdf(km);
+    let mut file = File::create("sk").unwrap();
+    file.write_all(&sk).unwrap();
 
     // Compute associated data
     let ad = [ik_pub, ik_b].concat();
@@ -417,7 +430,7 @@ pub fn fetch_keys_handshake(req_id: String) {
     let handshake = body.to_string();
     let body = json!({
         "request_id": req_id,
-        "handhshake": handshake
+        "handshake": handshake
     });
 
     let client = reqwest::blocking::Client::new();
@@ -429,6 +442,20 @@ pub fn fetch_keys_handshake(req_id: String) {
         };
 }
 
-pub fn complete_handshake() {
+// pub fn complete_handshake(handshake: String) {
+//     let hs: Value = serde_json::from_str(&handshake).unwrap();
+//     let s_ik_a = hs["ik"].to_string();
+//     let s_ek_a = hs["ek"].to_string();
 
-}
+//     let mut ik_a: [u8; 32] = [0; 32];
+//     hex::decode_to_slice(s_ik_a, &mut ik_a).unwrap();
+//     let mut ek_a: [u8; 32] = [0; 32];
+//     hex::decode_to_slice(s_ek_a, &mut ek_a).unwrap();
+
+//     let f = fs::read_to_string("keys.json").unwrap();
+//     let keys: Value = serde_json::from_str(&f).unwrap();
+
+//     let s_spk_pub = keys["spk_pub"].to_string();
+
+
+// }
