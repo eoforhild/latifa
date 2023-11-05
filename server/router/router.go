@@ -36,6 +36,12 @@ func NewClient(mongodb mongo.Client) *gin.Engine {
 		gated.POST("/requests/email/:email", postRequestEmail)
 		gated.POST("/requests/:request/approve", postRequestApprove)
 		gated.GET("/requests/pending", getRequestPending)
+		gated.GET("/requests/approved", getRequestApproved)
+		gated.GET("/requests/history/sent", getRequestSentHistory)
+		gated.GET("/requests/history/received", getRequestReceivedHistory)
+
+		gated.GET("/handshake", getHandshake)
+		gated.POST("/handshake", postHandshake)
 	}
 
 	return router
