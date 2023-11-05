@@ -1,8 +1,6 @@
-mod xeddsa;
-
-use xeddsa::XEdDSA;
+use client::{generate_all_keys, publish_all_keys};
 
 fn main() {
-    println!("Hello, world!");
-    let test = XEdDSA::new();
+    generate_all_keys(false);
+    publish_all_keys("s","s");
 }
