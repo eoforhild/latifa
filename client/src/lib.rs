@@ -6,7 +6,11 @@ use std::io::prelude::*;
 use hkdf::Hkdf;
 use pqc_kyber::*;
 use sha2::Sha512;
-use x25519_dalek::{StaticSecret, PublicKey};
+use x25519_dalek::{StaticSecret, PublicKey, EphemeralSecret, x25519};
+use aes_gcm::{
+    aead::{Aead, AeadCore, KeyInit, Payload},
+    Aes256Gcm, Key // Or `Aes128Gcm`
+};
 use rand::{rngs::StdRng, SeedableRng};
 use serde_json::{json, Value};
 use hex;
@@ -17,6 +21,8 @@ const HKDF_F: [u8; 32] = [0xFF; 32];
 
 const ONETIME_CURVE: usize = 32;
 const ONETIME_PQKEM: usize = 32;
+
+const BASE_URL: &str = "http://10.169.129.170:8080";
 
 pub fn kdf(km: &[u8]) -> [u8; 32] {
     let ikm = [&HKDF_F, km].concat();
@@ -35,14 +41,9 @@ pub fn kdf(km: &[u8]) -> [u8; 32] {
  * keys in the client folder. Note that this will require a complete
  * reupload of all keys to the server.
  */
-pub fn generate_all_keys(force: bool) {
+pub fn generate_keys_and_dump() {
     // TODO CHECK FOR PREEXISTING KEYS.JSON
     // TODO ENCRYPT KEYS.JSON
-    if !force {
-        // check if secrets.json exists
-        // if yes, fail
-        // else continue
-    }
 
     // Generate all the secret portions of the keys
     let ik_sec = StaticSecret::random_from_rng(StdRng::from_entropy());
@@ -127,10 +128,10 @@ pub fn generate_all_keys(force: bool) {
 }
 
 /**
- * Info is just the registration form
- * Addr is for the address to post to
+ * Called upon registration to the server. Will publish all stored public
+ * keys.
  */
-pub async fn publish_all_keys(reg_form: &str, addr: &str) -> bool{
+pub async fn register_and_publish(reg_form: &str) -> bool{
     let x = xeddsa::XEdDSA::new();
     // Generate all the nonces needed for signatures
     let mut csprg = StdRng::from_entropy();
@@ -216,7 +217,7 @@ pub async fn publish_all_keys(reg_form: &str, addr: &str) -> bool{
     });
 
     let client = reqwest::Client::new();
-    let r = client.post(addr)
+    let r = client.post(BASE_URL.to_owned()+"/register")
         .json(&body)
         .send()
         .await;
@@ -235,7 +236,163 @@ pub async fn publish_all_keys(reg_form: &str, addr: &str) -> bool{
     }
 }
 
-fn fetch_keys_from(other: String) {
-    // Fetch from the server and get a JSON response with all the keys needed
-    let keys: Value;
+/**
+ * Login function
+ */
+pub async fn login(log_form: &str) -> bool {
+    let form: Value = serde_json::from_str(log_form).unwrap();
+    let client = reqwest::Client::new();
+    let res = match client.post(BASE_URL.to_owned() + "/login")
+        .json(&form).send().await {
+        Ok(r) => r,
+        Err(_) => return false,
+    };
+    if res.status().as_u16() == 200 {
+        let auth = res.json::<Value>().await.unwrap();
+        let token = auth["token"].as_str().unwrap();
+        let mut file = File::create("auth").unwrap();
+        file.write_all(token.as_bytes()).unwrap();
+        true
+    } else {
+        false
+    }
+}
+
+/**
+ * Requests a conncetion to the client with the email
+ * Returns true if request was made successfully.
+ * This DOES NOT mean that the request was approved,
+ * only that it was posted onto the server.
+ */
+pub async fn request_connection(email: String) -> bool {
+    let token = fs::read_to_string("auth").unwrap();
+    let client = reqwest::Client::new();
+    let res = match client.post(BASE_URL.to_owned()+"/requests/email/"+&email)
+        .header("Authorization", "Bearer ".to_owned() + &token)
+        .send()
+        .await {
+        Ok(e) => e,
+        Err(_) => return false,
+    };
+    if res.status().as_u16() == 204 {
+        true
+    } else {
+        false
+    }
+}
+
+pub async fn pending_requests() -> bool {
+    let token = fs::read_to_string("auth").unwrap();
+    let client = reqwest::Client::new();
+    let res = match client.get(BASE_URL.to_owned()+"/requests/pending")
+        .header("Authorization", "Bearer ".to_owned() + &token)
+        .send()
+        .await {
+        Ok(e) => e,
+        Err(_) => return false,
+    };
+
+    // match res.().await {
+    //     Ok(r) => {
+    //         println!("{:?}",r[0]);
+    //     },
+    //     Err(_) => return false,
+    // }
+    true
+}
+
+/**
+ * Upon approval of key fetching (aka the person allowed
+ * you to initiate contact), fetch all keys needed and
+ * initiate the handshake protocol.
+ * 
+ * Email identifies the recipient of this handshake
+ */
+pub async fn fetch_keys_handshake(email: String) {
+    let x = xeddsa::XEdDSA::new();
+    // FETCH from the server and get a JSON response with all the keys needed
+    let keys: Value = json!({}); // temporary
+    let mut ik_b: [u8; 32] = [0; 32];
+    let mut spk_b: [u8; 32] = [0; 32];
+    let mut spk_b_sig: [u8; 64] = [0; 64];
+    let mut pqpk_b: [u8; KYBER_PUBLICKEYBYTES] = [0; KYBER_PUBLICKEYBYTES];
+    let mut pqpk_b_sig: [u8; 64] = [0; 64];
+    let mut opk_b: [u8; 32] = [0; 32];
+    hex::decode_to_slice(keys["ik"].as_str().unwrap(), &mut ik_b).unwrap();
+    hex::decode_to_slice(keys["spk"].as_str().unwrap(), &mut spk_b).unwrap();
+    hex::decode_to_slice(keys["spk_sig"].as_str().unwrap(), &mut spk_b_sig).unwrap();
+    hex::decode_to_slice(keys["pqpk"].as_str().unwrap(), &mut pqpk_b).unwrap();
+    hex::decode_to_slice(keys["pqpk_sig"].as_str().unwrap(), &mut pqpk_b_sig).unwrap();
+    hex::decode_to_slice(keys["opk"].as_str().unwrap(), &mut opk_b).unwrap();
+
+    // Verify signatures
+    let b1 = x.verify(ik_b.clone(), &spk_b, spk_b_sig);
+    let b2 = x.verify(ik_b.clone(), &pqpk_b, pqpk_b_sig);
+    if b1 || b2 {
+        // Abort
+        return
+    }
+
+    // Just ephemeral secret
+    let ek_sec: EphemeralSecret = EphemeralSecret::random_from_rng(StdRng::from_entropy());
+    let ek_pub: PublicKey = PublicKey::from(&ek_sec);
+
+    // PQKEM stuff
+    let (ct, ss) = encapsulate(&pqpk_b, &mut StdRng::from_entropy()).unwrap();
+
+    // Read in the identity key
+    let f = fs::read_to_string("keys.json").unwrap();
+    let keys: Value = serde_json::from_str(&f).unwrap();
+    let mut ik_pub: [u8; 32] = [0; 32]; 
+    hex::decode_to_slice(keys["ik_pub"].as_str().unwrap(), &mut ik_pub).unwrap();
+
+    // Compute triple diffie hellman
+    // Needs to account for dh4 with OPK
+    let dh1 = x25519(ik_pub.clone(), spk_b.clone());
+    let dh2 = x25519(ek_pub.to_bytes(), ik_b.clone());
+    let dh3 = x25519(ek_pub.to_bytes(), spk_b.clone());
+
+    let km = [dh1, dh2, dh3, ss].concat();
+    let sk = kdf(&km);
+
+    // Compute associated data
+    let ad = [ik_pub, ik_b].concat();
+
+    // Let the first message of this protocol be the 
+    let aes_key = Key::<Aes256Gcm>::from_slice(&sk);
+    let cipher = Aes256Gcm::new(&aes_key); 
+    let nonce = Aes256Gcm::generate_nonce(&mut StdRng::from_entropy());
+    let payload = Payload {
+        msg: &ik_pub,
+        aad: &ad,
+    };
+    let handshake = cipher.encrypt(&nonce, payload).unwrap();
+
+    // Convert all needed info into hex strings
+    let s_ek_pub = hex::encode(ek_pub.as_bytes());
+    let s_ct = hex::encode(ct);
+    let s_handshake = hex::encode(&handshake);
+    let s_pqpk_b = hex::encode(pqpk_b);
+    let s_opk_b = hex::encode(opk_b);
+
+    // Construct the JSON
+    let body = json!({
+        "ik": keys["ik_pub"].as_str().unwrap(),
+        "ek": s_ek_pub,
+        "ct": s_ct,
+        "handshake": s_handshake,
+        "email": email,
+        "pqpk_used": s_pqpk_b,
+        "opk_used": s_opk_b,
+    });
+
+    let client = reqwest::Client::new();
+    let r = client.post(BASE_URL.to_owned()+"/handshake")
+        .json(&body)
+        .send()
+        .await;
+}
+
+pub async fn complete_handshake() {
+
 }
