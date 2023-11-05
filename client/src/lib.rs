@@ -291,13 +291,12 @@ pub async fn pending_requests() -> bool {
         Ok(e) => e,
         Err(_) => return false,
     };
-
-    // match res.().await {
-    //     Ok(r) => {
-    //         println!("{:?}",r[0]);
-    //     },
-    //     Err(_) => return false,
-    // }
+    match res.json::<Value>().await {
+        Ok(r) => {
+            println!("{:?}",r);
+        },
+        Err(_) => return false,
+    }
     true
 }
 
