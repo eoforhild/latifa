@@ -3,14 +3,29 @@ mod xeddsa;
 use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
-use pqc_kyber::{*};
+use hkdf::Hkdf;
+use pqc_kyber::*;
+use sha2::Sha512;
 use x25519_dalek::{StaticSecret, PublicKey};
 use rand::{rngs::StdRng, SeedableRng};
 use serde_json::{json, Value};
 use hex;
 
+const HKDF_INFO: &str = "LATIFAProtocol_CURVE25519_SHA-512_CRYSTALS-KYBER-1024";
+const HKDF_SALT: [u8; 64] = [0; 64];
+const HKDF_F: [u8; 32] = [0xFF; 32];
+
 const ONETIME_CURVE: usize = 32;
 const ONETIME_PQKEM: usize = 32;
+
+pub fn kdf(km: &[u8]) -> [u8; 32] {
+    let ikm = [&HKDF_F, km].concat();
+    let hk = Hkdf::<Sha512>::new(Some(&HKDF_SALT), &ikm);
+    let mut okm: [u8; 32] = [0; 32];
+    hk.expand(HKDF_INFO.as_bytes(), &mut okm)
+        .expect("valid");
+    okm
+}
 
 /**
  * Generates all the needed keys for first time set up.
@@ -21,6 +36,8 @@ const ONETIME_PQKEM: usize = 32;
  * reupload of all keys to the server.
  */
 pub fn generate_all_keys(force: bool) {
+    // TODO CHECK FOR PREEXISTING KEYS.JSON
+    // TODO ENCRYPT KEYS.JSON
     if !force {
         // check if secrets.json exists
         // if yes, fail
@@ -113,7 +130,7 @@ pub fn generate_all_keys(force: bool) {
  * Info is just the registration form
  * Addr is for the address to post to
  */
-pub fn publish_all_keys(info: &str, addr: &str) -> bool {
+pub async fn publish_all_keys(reg_form: &str, addr: &str) -> bool{
     let x = xeddsa::XEdDSA::new();
     // Generate all the nonces needed for signatures
     let mut csprg = StdRng::from_entropy();
@@ -123,10 +140,10 @@ pub fn publish_all_keys(info: &str, addr: &str) -> bool {
     }
 
     // Parse the info sent from Flutter
-    // let reg: Value = serde_json::from_str(info).unwrap();
-    // let email = reg["email"].as_str().unwrap();
-    // let username = reg["username"].as_str().unwrap();
-    // let password = reg["password"].as_str().unwrap();
+    let form: Value = serde_json::from_str(reg_form).unwrap();
+    let email = form["email"].as_str().unwrap();
+    let username = form["username"].as_str().unwrap();
+    let password = form["password"].as_str().unwrap();
 
     let f = fs::read_to_string("keys.json").unwrap();
     let keys: Value = serde_json::from_str(&f).unwrap();
@@ -137,14 +154,11 @@ pub fn publish_all_keys(info: &str, addr: &str) -> bool {
     hex::decode_to_slice(s_ik_sec, &mut ik_sec).unwrap();
 
     // Get all the hex-form public keys from json
-    let s_ik_pub = keys["ik_pub"].as_str().unwrap();
     let s_spk_pub = keys["spk_pub"].as_str().unwrap();
     let s_pqspk_pub = keys["pqspk_pub"].as_str().unwrap();
     let s_pqopk_pub_arr = &keys["pqopk_pub_arr"];
 
     // Convert to byte arrays for signing
-    let mut ik_pub: [u8; 32] = [0; 32];
-    hex::decode_to_slice(s_ik_pub, &mut ik_pub).unwrap();
     let mut spk_pub: [u8; 32] = [0; 32];
     hex::decode_to_slice(s_spk_pub, &mut spk_pub).unwrap();
     let mut pqspk_pub: [u8; KYBER_PUBLICKEYBYTES] = [0; KYBER_PUBLICKEYBYTES];
@@ -176,20 +190,7 @@ pub fn publish_all_keys(info: &str, addr: &str) -> bool {
         pqopk_pub_sig_arr.push(to_add);
     }
 
-    // // TEST
-    // let mut test: Vec<[u8; KYBER_PUBLICKEYBYTES]> = vec![];
-    // for i in 0..ONETIME_PQKEM {
-    //     let s_pqopk_pub = s_pqopk_pub_arr[i].as_str().unwrap();
-    //     let mut pqopk_pub: [u8; KYBER_PUBLICKEYBYTES] = [0; KYBER_PUBLICKEYBYTES];
-    //     hex::decode_to_slice(s_pqopk_pub, &mut pqopk_pub).unwrap();
-    //     test.push(pqopk_pub);
-    // }
-
-    // for i in 0..ONETIME_PQKEM {
-    //     println!("{}", x.verify(ik_pub, &test[i], pqopk_pub_sig_arr[i]));
-    // }
-
-    // JSON'ify the information and post to the server
+    // Get signature as hex encoded data
     let s_spk_pub_sig: String = hex::encode(spk_pub_sig);
     let s_pqspk_pub_sig: String = hex::encode(pqspk_pub_sig);
     let mut s_pqopk_pub_sig_arr: Vec<String> = vec![];
@@ -198,6 +199,43 @@ pub fn publish_all_keys(info: &str, addr: &str) -> bool {
         s_pqopk_pub_sig_arr.push(to_add);
     }
 
+    // Send the registration POST request
+    let body = json!({
+        "username": username,
+        "email": email,
+        "password": password,
 
-    todo!()
+        "ik": keys["ik_pub"],
+        "spk": keys["spk_pub"],
+        "spk_sig": s_spk_pub_sig,
+        "pqspk": keys["pqspk_pub"],
+        "pqspk_sig": s_pqspk_pub_sig,
+        "opk_arr": keys["opk_pub_arr"],
+        "pqopk_arr": keys["pqopk_pub_arr"],
+        "pqopk_sig_arr": s_pqopk_pub_sig_arr,
+    });
+
+    let client = reqwest::Client::new();
+    let r = client.post(addr)
+        .json(&body)
+        .send()
+        .await;
+    let res = match r {
+        Ok(res) => res,
+        Err(err) => {
+            println!("{}", err.to_string());
+            return false
+        },
+    };
+
+    if res.status().as_u16() == 204 {
+        true
+    } else {
+        false
+    }
+}
+
+fn fetch_keys_from(other: String) {
+    // Fetch from the server and get a JSON response with all the keys needed
+    let keys: Value;
 }
