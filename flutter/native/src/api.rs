@@ -297,6 +297,10 @@ pub fn pending_requests() -> bool {
     true
 }
 
+pub fn approved_requests() {
+
+}
+
 /**
  * Upon approval of key fetching (aka the person allowed
  * you to initiate contact), fetch all keys needed and
@@ -304,10 +308,22 @@ pub fn pending_requests() -> bool {
  * 
  * Email identifies the recipient of this handshake
  */
-pub fn fetch_keys_handshake(email: String) {
+pub fn fetch_keys_handshake(req_id: String) {
     let x = xeddsa::XEdDSA::new();
     // FETCH from the server and get a JSON response with all the keys needed
-    let keys: Value = json!({}); // temporary
+    let client = reqwest::blocking::Client::new();
+    let body = json!({
+        "request_id": req_id
+    });
+    let res = match client.get(BASE_URL.to_owned() + "/handshakes")
+        .json(&body)
+        .send() {
+            Ok(r) => r,
+            Err(_) => return,
+        };
+
+
+    let keys: Value = res.json().unwrap();
     let mut ik_b: [u8; 32] = [0; 32];
     let mut spk_b: [u8; 32] = [0; 32];
     let mut spk_b_sig: [u8; 64] = [0; 64];
@@ -319,7 +335,7 @@ pub fn fetch_keys_handshake(email: String) {
     hex::decode_to_slice(keys["spk_sig"].as_str().unwrap(), &mut spk_b_sig).unwrap();
     hex::decode_to_slice(keys["pqpk"].as_str().unwrap(), &mut pqpk_b).unwrap();
     hex::decode_to_slice(keys["pqpk_sig"].as_str().unwrap(), &mut pqpk_b_sig).unwrap();
-    hex::decode_to_slice(keys["opk"].as_str().unwrap(), &mut opk_b).unwrap();
+    // hex::decode_to_slice(keys["opk"].as_str().unwrap(), &mut opk_b).unwrap();
 
     // Verify signatures
     let b1 = x.verify(ik_b.clone(), &spk_b, spk_b_sig);
@@ -377,9 +393,13 @@ pub fn fetch_keys_handshake(email: String) {
         "ek": s_ek_pub,
         "ct": s_ct,
         "handshake": s_handshake,
-        "email": email,
         "pqpk_used": s_pqpk_b,
         "opk_used": s_opk_b,
+    });
+    let handshake = body.to_string();
+    let body = json!({
+        "request_id": req_id,
+        "handhshake": handshake
     });
 
     let client = reqwest::blocking::Client::new();
@@ -390,8 +410,4 @@ pub fn fetch_keys_handshake(email: String) {
 
 pub fn complete_handshake() {
 
-}
-
-pub fn helloWorld() -> String {
-    String::from("Hello from Rust! 🦀")
 }
