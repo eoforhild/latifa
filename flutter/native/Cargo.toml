@@ -1,9 +1,12 @@
 [package]
-name = "client"
+name = "native"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
 bnum = "0.9.1"
@@ -18,3 +21,4 @@ hex = "0.4.3"
 reqwest = { version = "0.11.22", features = ["json"] }
 tokio = { version = "1.33.0", features = ["full"] }
 aes-gcm = "0.10.3"
+flutter_rust_bridge = "1"
