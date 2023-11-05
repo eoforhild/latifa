@@ -77,10 +77,6 @@ abstract class Native {
   Future<void> fetchKeysHandshake({required String reqId, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kFetchKeysHandshakeConstMeta;
-
-  Future<void> completeHandshake({dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kCompleteHandshakeConstMeta;
 }
 
 class U8Array32 extends NonGrowableListView<int> {

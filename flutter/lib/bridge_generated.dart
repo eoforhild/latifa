@@ -186,23 +186,6 @@ class NativeImpl implements Native {
         argNames: ["reqId"],
       );
 
-  Future<void> completeHandshake({dynamic hint}) {
-    return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_complete_handshake(port_),
-      parseSuccessData: _wire2api_unit,
-      parseErrorData: null,
-      constMeta: kCompleteHandshakeConstMeta,
-      argValues: [],
-      hint: hint,
-    ));
-  }
-
-  FlutterRustBridgeTaskConstMeta get kCompleteHandshakeConstMeta =>
-      const FlutterRustBridgeTaskConstMeta(
-        debugName: "complete_handshake",
-        argNames: [],
-      );
-
   void dispose() {
     _platform.dispose();
   }
@@ -493,20 +476,6 @@ class NativeWire implements FlutterRustBridgeWireBase {
               ffi.Pointer<wire_uint_8_list>)>>('wire_fetch_keys_handshake');
   late final _wire_fetch_keys_handshake = _wire_fetch_keys_handshakePtr
       .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
-
-  void wire_complete_handshake(
-    int port_,
-  ) {
-    return _wire_complete_handshake(
-      port_,
-    );
-  }
-
-  late final _wire_complete_handshakePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
-          'wire_complete_handshake');
-  late final _wire_complete_handshake =
-      _wire_complete_handshakePtr.asFunction<void Function(int)>();
 
   ffi.Pointer<wire_uint_8_list> new_uint_8_list_0(
     int len,

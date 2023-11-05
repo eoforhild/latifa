@@ -130,16 +130,6 @@ fn wire_fetch_keys_handshake_impl(port_: MessagePort, req_id: impl Wire2Api<Stri
         },
     )
 }
-fn wire_complete_handshake_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
-        WrapInfo {
-            debug_name: "complete_handshake",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || move |task_callback| Result::<_, ()>::Ok(complete_handshake()),
-    )
-}
 // Section: wrapper structs
 
 // Section: static checks

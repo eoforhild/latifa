@@ -46,11 +46,6 @@ pub extern "C" fn wire_fetch_keys_handshake(port_: i64, req_id: *mut wire_uint_8
     wire_fetch_keys_handshake_impl(port_, req_id)
 }
 
-#[no_mangle]
-pub extern "C" fn wire_complete_handshake(port_: i64) {
-    wire_complete_handshake_impl(port_)
-}
-
 // Section: allocate functions
 
 #[no_mangle]
