@@ -24,8 +24,8 @@ const ONETIME_PQKEM: usize = 32;
 
 const BASE_URL: &str = "http://10.169.129.170:8080";
 
-pub fn kdf(km: &[u8]) -> [u8; 32] {
-    let ikm = [&HKDF_F, km].concat();
+pub fn kdf(km: Vec<u8>) -> [u8; 32] {
+    let ikm = [&HKDF_F, km.as_slice()].concat();
     let hk = Hkdf::<Sha512>::new(Some(&HKDF_SALT), &ikm);
     let mut okm: [u8; 32] = [0; 32];
     hk.expand(HKDF_INFO.as_bytes(), &mut okm)
@@ -131,7 +131,7 @@ pub fn generate_keys_and_dump() {
  * Called upon registration to the server. Will publish all stored public
  * keys.
  */
-pub async fn register_and_publish(reg_form: &str) -> bool{
+pub async fn register_and_publish(reg_form: String) -> bool{
     let x = xeddsa::XEdDSA::new();
     // Generate all the nonces needed for signatures
     let mut csprg = StdRng::from_entropy();
@@ -141,7 +141,7 @@ pub async fn register_and_publish(reg_form: &str) -> bool{
     }
 
     // Parse the info sent from Flutter
-    let form: Value = serde_json::from_str(reg_form).unwrap();
+    let form: Value = serde_json::from_str(&reg_form).unwrap();
     let email = form["email"].as_str().unwrap();
     let username = form["username"].as_str().unwrap();
     let password = form["password"].as_str().unwrap();
@@ -239,8 +239,8 @@ pub async fn register_and_publish(reg_form: &str) -> bool{
 /**
  * Login function
  */
-pub async fn login(log_form: &str) -> bool {
-    let form: Value = serde_json::from_str(log_form).unwrap();
+pub async fn login(log_form: String) -> bool {
+    let form: Value = serde_json::from_str(&log_form).unwrap();
     let client = reqwest::Client::new();
     let res = match client.post(BASE_URL.to_owned() + "/login")
         .json(&form).send().await {
@@ -352,7 +352,7 @@ pub async fn fetch_keys_handshake(email: String) {
     let dh3 = x25519(ek_pub.to_bytes(), spk_b.clone());
 
     let km = [dh1, dh2, dh3, ss].concat();
-    let sk = kdf(&km);
+    let sk = kdf(km);
 
     // Compute associated data
     let ad = [ik_pub, ik_b].concat();
@@ -394,4 +394,8 @@ pub async fn fetch_keys_handshake(email: String) {
 
 pub async fn complete_handshake() {
 
+}
+
+pub fn helloWorld() -> String {
+    String::from("Hello from Rust! 🦀")
 }

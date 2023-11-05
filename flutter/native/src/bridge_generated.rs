@@ -22,6 +22,104 @@ use std::sync::Arc;
 
 // Section: wire functions
 
+fn wire_kdf_impl(port_: MessagePort, km: impl Wire2Api<Vec<u8>> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, [u8; 32], _>(
+        WrapInfo {
+            debug_name: "kdf",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_km = km.wire2api();
+            move |task_callback| Result::<_, ()>::Ok(kdf(api_km))
+        },
+    )
+}
+fn wire_generate_keys_and_dump_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
+        WrapInfo {
+            debug_name: "generate_keys_and_dump",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| Result::<_, ()>::Ok(generate_keys_and_dump()),
+    )
+}
+fn wire_register_and_publish_impl(
+    port_: MessagePort,
+    reg_form: impl Wire2Api<String> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, bool, _>(
+        WrapInfo {
+            debug_name: "register_and_publish",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_reg_form = reg_form.wire2api();
+            move |task_callback| Result::<_, ()>::Ok(register_and_publish(api_reg_form))
+        },
+    )
+}
+fn wire_login_impl(port_: MessagePort, log_form: impl Wire2Api<String> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, bool, _>(
+        WrapInfo {
+            debug_name: "login",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_log_form = log_form.wire2api();
+            move |task_callback| Result::<_, ()>::Ok(login(api_log_form))
+        },
+    )
+}
+fn wire_request_connection_impl(port_: MessagePort, email: impl Wire2Api<String> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, bool, _>(
+        WrapInfo {
+            debug_name: "request_connection",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_email = email.wire2api();
+            move |task_callback| Result::<_, ()>::Ok(request_connection(api_email))
+        },
+    )
+}
+fn wire_pending_requests_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, bool, _>(
+        WrapInfo {
+            debug_name: "pending_requests",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| Result::<_, ()>::Ok(pending_requests()),
+    )
+}
+fn wire_fetch_keys_handshake_impl(port_: MessagePort, email: impl Wire2Api<String> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
+        WrapInfo {
+            debug_name: "fetch_keys_handshake",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_email = email.wire2api();
+            move |task_callback| Result::<_, ()>::Ok(fetch_keys_handshake(api_email))
+        },
+    )
+}
+fn wire_complete_handshake_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
+        WrapInfo {
+            debug_name: "complete_handshake",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| Result::<_, ()>::Ok(complete_handshake()),
+    )
+}
 fn wire_helloWorld_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, String, _>(
         WrapInfo {
@@ -54,6 +152,13 @@ where
         (!self.is_null()).then(|| self.wire2api())
     }
 }
+
+impl Wire2Api<u8> for u8 {
+    fn wire2api(self) -> u8 {
+        self
+    }
+}
+
 // Section: impl IntoDart
 
 // Section: executor

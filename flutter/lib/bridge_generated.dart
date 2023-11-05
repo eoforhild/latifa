@@ -26,6 +26,149 @@ class NativeImpl implements Native {
   factory NativeImpl.wasm(FutureOr<WasmModule> module) =>
       NativeImpl(module as ExternalLibrary);
   NativeImpl.raw(this._platform);
+  Future<U8Array32> kdf({required Uint8List km, dynamic hint}) {
+    var arg0 = _platform.api2wire_uint_8_list(km);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_kdf(port_, arg0),
+      parseSuccessData: _wire2api_u8_array_32,
+      parseErrorData: null,
+      constMeta: kKdfConstMeta,
+      argValues: [km],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kKdfConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "kdf",
+        argNames: ["km"],
+      );
+
+  Future<void> generateKeysAndDump({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_generate_keys_and_dump(port_),
+      parseSuccessData: _wire2api_unit,
+      parseErrorData: null,
+      constMeta: kGenerateKeysAndDumpConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kGenerateKeysAndDumpConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "generate_keys_and_dump",
+        argNames: [],
+      );
+
+  Future<bool> registerAndPublish({required String regForm, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(regForm);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_register_and_publish(port_, arg0),
+      parseSuccessData: _wire2api_bool,
+      parseErrorData: null,
+      constMeta: kRegisterAndPublishConstMeta,
+      argValues: [regForm],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kRegisterAndPublishConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "register_and_publish",
+        argNames: ["regForm"],
+      );
+
+  Future<bool> login({required String logForm, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(logForm);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_login(port_, arg0),
+      parseSuccessData: _wire2api_bool,
+      parseErrorData: null,
+      constMeta: kLoginConstMeta,
+      argValues: [logForm],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kLoginConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "login",
+        argNames: ["logForm"],
+      );
+
+  Future<bool> requestConnection({required String email, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(email);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_request_connection(port_, arg0),
+      parseSuccessData: _wire2api_bool,
+      parseErrorData: null,
+      constMeta: kRequestConnectionConstMeta,
+      argValues: [email],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kRequestConnectionConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "request_connection",
+        argNames: ["email"],
+      );
+
+  Future<bool> pendingRequests({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_pending_requests(port_),
+      parseSuccessData: _wire2api_bool,
+      parseErrorData: null,
+      constMeta: kPendingRequestsConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kPendingRequestsConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "pending_requests",
+        argNames: [],
+      );
+
+  Future<void> fetchKeysHandshake({required String email, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(email);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_fetch_keys_handshake(port_, arg0),
+      parseSuccessData: _wire2api_unit,
+      parseErrorData: null,
+      constMeta: kFetchKeysHandshakeConstMeta,
+      argValues: [email],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kFetchKeysHandshakeConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "fetch_keys_handshake",
+        argNames: ["email"],
+      );
+
+  Future<void> completeHandshake({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_complete_handshake(port_),
+      parseSuccessData: _wire2api_unit,
+      parseErrorData: null,
+      constMeta: kCompleteHandshakeConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kCompleteHandshakeConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "complete_handshake",
+        argNames: [],
+      );
+
   Future<String> helloWorld({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_helloWorld(port_),
@@ -52,16 +195,33 @@ class NativeImpl implements Native {
     return raw as String;
   }
 
+  bool _wire2api_bool(dynamic raw) {
+    return raw as bool;
+  }
+
   int _wire2api_u8(dynamic raw) {
     return raw as int;
+  }
+
+  U8Array32 _wire2api_u8_array_32(dynamic raw) {
+    return U8Array32(_wire2api_uint_8_list(raw));
   }
 
   Uint8List _wire2api_uint_8_list(dynamic raw) {
     return raw as Uint8List;
   }
+
+  void _wire2api_unit(dynamic raw) {
+    return;
+  }
 }
 
 // Section: api2wire
+
+@protected
+int api2wire_u8(int raw) {
+  return raw;
+}
 
 // Section: finalizer
 
@@ -70,6 +230,17 @@ class NativePlatform extends FlutterRustBridgeBase<NativeWire> {
 
 // Section: api2wire
 
+  @protected
+  ffi.Pointer<wire_uint_8_list> api2wire_String(String raw) {
+    return api2wire_uint_8_list(utf8.encoder.convert(raw));
+  }
+
+  @protected
+  ffi.Pointer<wire_uint_8_list> api2wire_uint_8_list(Uint8List raw) {
+    final ans = inner.new_uint_8_list_0(raw.length);
+    ans.ref.ptr.asTypedList(raw.length).setAll(0, raw);
+    return ans;
+  }
 // Section: finalizer
 
 // Section: api_fill_to_wire
@@ -171,6 +342,133 @@ class NativeWire implements FlutterRustBridgeWireBase {
   late final _init_frb_dart_api_dl = _init_frb_dart_api_dlPtr
       .asFunction<int Function(ffi.Pointer<ffi.Void>)>();
 
+  void wire_kdf(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> km,
+  ) {
+    return _wire_kdf(
+      port_,
+      km,
+    );
+  }
+
+  late final _wire_kdfPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>('wire_kdf');
+  late final _wire_kdf = _wire_kdfPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_generate_keys_and_dump(
+    int port_,
+  ) {
+    return _wire_generate_keys_and_dump(
+      port_,
+    );
+  }
+
+  late final _wire_generate_keys_and_dumpPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_generate_keys_and_dump');
+  late final _wire_generate_keys_and_dump =
+      _wire_generate_keys_and_dumpPtr.asFunction<void Function(int)>();
+
+  void wire_register_and_publish(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> reg_form,
+  ) {
+    return _wire_register_and_publish(
+      port_,
+      reg_form,
+    );
+  }
+
+  late final _wire_register_and_publishPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64,
+              ffi.Pointer<wire_uint_8_list>)>>('wire_register_and_publish');
+  late final _wire_register_and_publish = _wire_register_and_publishPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_login(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> log_form,
+  ) {
+    return _wire_login(
+      port_,
+      log_form,
+    );
+  }
+
+  late final _wire_loginPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>('wire_login');
+  late final _wire_login = _wire_loginPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_request_connection(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> email,
+  ) {
+    return _wire_request_connection(
+      port_,
+      email,
+    );
+  }
+
+  late final _wire_request_connectionPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64,
+              ffi.Pointer<wire_uint_8_list>)>>('wire_request_connection');
+  late final _wire_request_connection = _wire_request_connectionPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_pending_requests(
+    int port_,
+  ) {
+    return _wire_pending_requests(
+      port_,
+    );
+  }
+
+  late final _wire_pending_requestsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_pending_requests');
+  late final _wire_pending_requests =
+      _wire_pending_requestsPtr.asFunction<void Function(int)>();
+
+  void wire_fetch_keys_handshake(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> email,
+  ) {
+    return _wire_fetch_keys_handshake(
+      port_,
+      email,
+    );
+  }
+
+  late final _wire_fetch_keys_handshakePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64,
+              ffi.Pointer<wire_uint_8_list>)>>('wire_fetch_keys_handshake');
+  late final _wire_fetch_keys_handshake = _wire_fetch_keys_handshakePtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_complete_handshake(
+    int port_,
+  ) {
+    return _wire_complete_handshake(
+      port_,
+    );
+  }
+
+  late final _wire_complete_handshakePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_complete_handshake');
+  late final _wire_complete_handshake =
+      _wire_complete_handshakePtr.asFunction<void Function(int)>();
+
   void wire_helloWorld(
     int port_,
   ) {
@@ -184,6 +482,21 @@ class NativeWire implements FlutterRustBridgeWireBase {
           'wire_helloWorld');
   late final _wire_helloWorld =
       _wire_helloWorldPtr.asFunction<void Function(int)>();
+
+  ffi.Pointer<wire_uint_8_list> new_uint_8_list_0(
+    int len,
+  ) {
+    return _new_uint_8_list_0(
+      len,
+    );
+  }
+
+  late final _new_uint_8_list_0Ptr = _lookup<
+          ffi
+          .NativeFunction<ffi.Pointer<wire_uint_8_list> Function(ffi.Int32)>>(
+      'new_uint_8_list_0');
+  late final _new_uint_8_list_0 = _new_uint_8_list_0Ptr
+      .asFunction<ffi.Pointer<wire_uint_8_list> Function(int)>();
 
   void free_WireSyncReturn(
     WireSyncReturn ptr,
@@ -201,6 +514,13 @@ class NativeWire implements FlutterRustBridgeWireBase {
 }
 
 final class _Dart_Handle extends ffi.Opaque {}
+
+final class wire_uint_8_list extends ffi.Struct {
+  external ffi.Pointer<ffi.Uint8> ptr;
+
+  @ffi.Int32()
+  external int len;
+}
 
 typedef DartPostCObjectFnType = ffi.Pointer<
     ffi.NativeFunction<

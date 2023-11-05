@@ -8,8 +8,79 @@ import 'package:meta/meta.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:collection/collection.dart';
+
 abstract class Native {
+  Future<U8Array32> kdf({required Uint8List km, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kKdfConstMeta;
+
+  ///
+  /// * Generates all the needed keys for first time set up.
+  /// * It will then dump all of the keys in the client folder.
+  /// *
+  /// * The force argument will forcefully override all currently present
+  /// * keys in the client folder. Note that this will require a complete
+  /// * reupload of all keys to the server.
+  ///
+  Future<void> generateKeysAndDump({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGenerateKeysAndDumpConstMeta;
+
+  ///
+  /// * Called upon registration to the server. Will publish all stored public
+  /// * keys.
+  ///
+  Future<bool> registerAndPublish({required String regForm, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRegisterAndPublishConstMeta;
+
+  ///
+  /// * Login function
+  ///
+  Future<bool> login({required String logForm, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kLoginConstMeta;
+
+  ///
+  /// * Requests a conncetion to the client with the email
+  /// * Returns true if request was made successfully.
+  /// * This DOES NOT mean that the request was approved,
+  /// * only that it was posted onto the server.
+  ///
+  Future<bool> requestConnection({required String email, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRequestConnectionConstMeta;
+
+  Future<bool> pendingRequests({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kPendingRequestsConstMeta;
+
+  ///
+  /// * Upon approval of key fetching (aka the person allowed
+  /// * you to initiate contact), fetch all keys needed and
+  /// * initiate the handshake protocol.
+  /// *
+  /// * Email identifies the recipient of this handshake
+  ///
+  Future<void> fetchKeysHandshake({required String email, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kFetchKeysHandshakeConstMeta;
+
+  Future<void> completeHandshake({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kCompleteHandshakeConstMeta;
+
   Future<String> helloWorld({dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kHelloWorldConstMeta;
+}
+
+class U8Array32 extends NonGrowableListView<int> {
+  static const arraySize = 32;
+  U8Array32(Uint8List inner)
+      : assert(inner.length == arraySize),
+        super(inner);
+  U8Array32.unchecked(Uint8List inner) : super(inner);
+  U8Array32.init() : super(Uint8List(arraySize));
 }
