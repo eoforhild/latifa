@@ -28,7 +28,7 @@ func NewClient(mongodb mongo.Client) *gin.Engine {
 	gated := router.Group("")
 	gated.Use(RequireAuthorization(), UserExists())
 	{
-		gated.POST("/files/upload", postFileUpload)
+		gated.POST("/files/upload/:file", postFileUpload)
 		gated.GET("/files/:file/download", getFileDownload)
 		gated.GET("/files", getFiles)
 		gated.DELETE("/files/:file", deleteFile)
