@@ -12,7 +12,7 @@ use aes_gcm::{
     Aes256Gcm, Key // Or `Aes128Gcm`
 };
 use rand::{rngs::StdRng, SeedableRng};
-use serde_json::{json, Value};
+use serde_json::{json, Value, Map};
 use hex;
 
 const HKDF_INFO: &str = "LATIFAProtocol_CURVE25519_SHA-512_CRYSTALS-KYBER-1024";
@@ -296,7 +296,7 @@ pub fn request_connection(email: String) -> bool {
     }
 }
 
-pub fn pending_requests() -> bool {
+fn pending_requests() -> bool {
     let token = fs::read_to_string("auth").unwrap();
     let client = reqwest::blocking::Client::new();
     let res = match client.get(BASE_URL.to_owned()+"/requests/pending")
@@ -336,7 +336,7 @@ pub fn approved_requests() {
  * 
  * Email identifies the recipient of this handshake
  */
-pub fn fetch_keys_handshake(req_id: String) {
+pub fn fetch_keys_handshake(req_id: String) -> Vec<u8> {
     let x = xeddsa::XEdDSA::new();
     // FETCH from the server and get a JSON response with all the keys needed
     let client = reqwest::blocking::Client::new();
@@ -347,7 +347,7 @@ pub fn fetch_keys_handshake(req_id: String) {
         .json(&body)
         .send() {
             Ok(r) => r,
-            Err(_) => return,
+            Err(_) => return vec![],
         };
 
 
@@ -370,11 +370,11 @@ pub fn fetch_keys_handshake(req_id: String) {
     let b2 = x.verify(ik_b.clone(), &pqpk_b, pqpk_b_sig);
     if b1 || b2 {
         // Abort
-        return
+        return vec![]
     }
 
     // Just ephemeral secret
-    let ek_sec: EphemeralSecret = EphemeralSecret::random_from_rng(StdRng::from_entropy());
+    let ek_sec: StaticSecret = StaticSecret::random_from_rng(StdRng::from_entropy());
     let ek_pub: PublicKey = PublicKey::from(&ek_sec);
 
     // PQKEM stuff
@@ -385,12 +385,14 @@ pub fn fetch_keys_handshake(req_id: String) {
     let keys: Value = serde_json::from_str(&f).unwrap();
     let mut ik_pub: [u8; 32] = [0; 32]; 
     hex::decode_to_slice(keys["ik_pub"].as_str().unwrap(), &mut ik_pub).unwrap();
+    let mut ik_sec: [u8; 32] = [0; 32]; 
+    hex::decode_to_slice(keys["ik_sec"].as_str().unwrap(), &mut ik_sec).unwrap();
 
     // Compute triple diffie hellman
     // Needs to account for dh4 with OPK
-    let dh1 = x25519(ik_pub.clone(), spk_b.clone());
-    let dh2 = x25519(ek_pub.to_bytes(), ik_b.clone());
-    let dh3 = x25519(ek_pub.to_bytes(), spk_b.clone());
+    let dh1 = x25519(ik_sec.clone(), spk_b.clone());
+    let dh2 = x25519(ek_sec.to_bytes(), ik_b.clone());
+    let dh3 = x25519(ek_sec.to_bytes(), spk_b.clone());
 
     let km = [dh1, dh2, dh3, ss].concat();
     let sk = kdf(km);
@@ -437,8 +439,9 @@ pub fn fetch_keys_handshake(req_id: String) {
         .json(&body)
         .send() {
             Ok(re) => re,
-            Err(_) => return,
+            Err(_) => return vec![],
         };
+        vec![]
 }
 
 // pub fn complete_handshake(handshake: String) {
